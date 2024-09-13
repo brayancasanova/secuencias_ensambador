@@ -1,0 +1,77 @@
+; PIC16F887 Configuration Bit Settings
+
+; Assembly source line config statements
+
+   
+#include "p16f887.inc"
+
+; CONFIG1
+; __config 0x28D5
+ __CONFIG _CONFIG1, _FOSC_INTRC_CLKOUT & _WDTE_OFF & _PWRTE_OFF & _MCLRE_OFF & _CP_OFF & _CPD_OFF & _BOREN_OFF & _IESO_OFF & _FCMEN_ON & _LVP_OFF
+; CONFIG2
+; __config 0x3FFF
+ __CONFIG _CONFIG2, _BOR4V_BOR40V & _WRT_OFF
+
+    LIST p=16F887
+    
+;variables del retardo
+N EQU 0xD0
+cont1 EQU 0x20 
+cont2 EQU 0x21
+ 
+contador1 EQU 0x24
+
+
+    ORG 0x00
+    
+	BSF STATUS, RP0  ;BANK 1
+	MOVLW 0x71
+	MOVWF OSCCON ;FREC. DE OSCILACIÓN
+	CLRF TRISB   ;TRISB = 0 (SALIDA)
+    
+	BSF STATUS,RP1   ;BANK 3
+	CLRF ANSELH      ;PUERTO B DIGITAL
+    
+	BCF STATUS,RP0   ;BANK0
+	BCF STATUS,RP1
+	
+
+REINICIAR
+	CLRF contador1
+SEC1
+	MOVF contador1,0
+	CALL TABLA
+	MOVWF PORTB
+	CALL RETARDO
+	INCF contador1,1
+	MOVLW .8
+	XORWF contador1,0
+	BTFSS STATUS,Z ; z=0, XOR /= 0, contador1 <8
+	GOTO SEC1      ; z=1, XOR = 1, contador = 0
+	GOTO REINICIAR
+	
+
+	
+TABLA	ADDWF	PCL,1
+	RETLW	B'10000001'
+	RETLW	B'11000010'
+	RETLW	B'11100100'
+	RETLW	B'11111000'
+	RETLW	B'00011000'
+	RETLW	B'00101100'
+	RETLW	B'01001110'
+	RETLW	B'10001111'
+
+RETARDO
+	MOVLW N
+	MOVWF cont1
+REP_1
+	MOVLW N
+	MOVWF cont2
+REP_2
+	DECFSZ cont2,1
+	GOTO REP_2
+	DECFSZ cont1,1
+	GOTO REP_1
+	RETURN
+    end
